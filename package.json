@@ -1,0 +1,31 @@
+{
+    "name": "arcade-in-code",
+    "displayName": "Arcade In Code",
+    "description": "A VS Code extension to manage Arcade sessions.",
+    "version": "1.0.0",
+    "publisher": "your-publisher-name",
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "activationEvents": [
+        "onCommand:arcade.setup",
+        "onStartupFinished"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "arcade.setup",
+                "title": "Arcade: Setup"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run build",
+        "build": "echo 'No build step defined.'",
+        "test": "echo 'No test specified.'"
+    },
+    "dependencies": {
+        "axios": "^0.21.1"
+    }
+}
