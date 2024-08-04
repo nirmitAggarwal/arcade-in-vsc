@@ -1,31 +1,47 @@
 {
-    "name": "arcade-in-code",
-    "displayName": "Arcade In Code",
-    "description": "A VS Code extension to manage Arcade sessions.",
-    "version": "1.0.0",
-    "publisher": "your-publisher-name",
-    "engines": {
-        "vscode": "^1.60.0"
-    },
-    "activationEvents": [
-        "onCommand:arcade.setup",
-        "onStartupFinished"
-    ],
-    "main": "./extension.js",
-    "contributes": {
-        "commands": [
-            {
-                "command": "arcade.setup",
-                "title": "Arcade: Setup"
-            }
-        ]
-    },
-    "scripts": {
-        "vscode:prepublish": "npm run build",
-        "build": "echo 'No build step defined.'",
-        "test": "echo 'No test specified.'"
-    },
-    "dependencies": {
-        "axios": "^0.21.1"
-    }
+  "name": "arcade-in-code",
+  "displayName": "Arcade in Code",
+  "description": "Control Arcade sessions from VS Code.",
+  "version": "0.1.0",
+  "publisher": "NirmitAggarwal",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:arcade.setup",
+    "onCommand:arcade.start",
+    "onCommand:arcade.cancel"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "arcade.setup",
+        "title": "ARC: Initialize Setup"
+      },
+      {
+        "command": "arcade.start",
+        "title": "ARC: Begin Session"
+      },
+      {
+        "command": "arcade.cancel",
+        "title": "ARC: End Session"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "echo 'No TypeScript compilation needed.'"
+  },
+  "devDependencies": {
+    "eslint": "^7.0.0",
+    "eslint-plugin-vscode": "^1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nirmitAggarwal/arcade-in-vsc"
+  }
 }

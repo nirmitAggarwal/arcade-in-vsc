@@ -1,8 +1,12 @@
 const vscode = require("vscode");
-const path = require("path");
 const axios = require("axios");
 
+const API_URL = "https://hackhour.hackclub.com/api";
+
 function activate(context) {
+  let statusBarItems = new Map();
+
+  // Initialize Session Command
   const setupCommand = vscode.commands.registerCommand(
     "arcade.setup",
     async () => {
@@ -20,12 +24,12 @@ function activate(context) {
         context.globalState.update("arcadeApiKey", apiKey);
         context.globalState.update("slackMemberId", slackMemberId);
         vscode.window.showInformationMessage(
-          "Arcade setup completed successfully."
+          "ARC Setup completed successfully."
         );
-        checkForOngoingSession(context, apiKey, slackMemberId);
+        setupStatusBar(context, statusBarItems);
       } else {
         vscode.window.showWarningMessage(
-          "Arcade setup was not completed. Both values are required."
+          "Both API Key and Slack Member ID are required."
         );
       }
     }
@@ -33,102 +37,156 @@ function activate(context) {
 
   context.subscriptions.push(setupCommand);
 
+  // Begin Session Command
+  const startSessionCommand = vscode.commands.registerCommand(
+    "arcade.start",
+    async () => {
+      const apiKey = context.globalState.get("arcadeApiKey");
+      const slackMemberId = context.globalState.get("slackMemberId");
+
+      if (!apiKey || !slackMemberId) {
+        vscode.window.showWarningMessage(
+          'Please run the "ARC: Initialize Session" command to configure the extension.'
+        );
+        return;
+      }
+
+      const work = await vscode.window.showInputBox({
+        prompt: "What are you working on?",
+        ignoreFocusOut: true,
+      });
+
+      if (work) {
+        try {
+          let response = await axios.post(
+            `${API_URL}/start/${slackMemberId}`,
+            {
+              work: work,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${apiKey}`,
+              },
+            }
+          );
+
+          if (response.data.ok) {
+            vscode.window.showInformationMessage(
+              "ARC Session started successfully!"
+            );
+          } else {
+            vscode.window.showErrorMessage("Failed to start session.");
+          }
+        } catch (error) {
+          vscode.window.showErrorMessage(
+            "Error starting session: " + error.message
+          );
+        }
+      } else {
+        vscode.window.showWarningMessage(
+          "Work description is required to start a session."
+        );
+      }
+    }
+  );
+
+  context.subscriptions.push(startSessionCommand);
+
+  // End Session Command
+  const cancelSessionCommand = vscode.commands.registerCommand(
+    "arcade.cancel",
+    async () => {
+      const apiKey = context.globalState.get("arcadeApiKey");
+      const slackMemberId = context.globalState.get("slackMemberId");
+
+      if (!apiKey || !slackMemberId) {
+        vscode.window.showWarningMessage(
+          'Please run the "ARC: Initialize Session" command to configure the extension.'
+        );
+        return;
+      }
+
+      try {
+        let response = await axios.post(
+          `${API_URL}/cancel/${slackMemberId}`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+            },
+          }
+        );
+
+        if (response.data.ok) {
+          vscode.window.showInformationMessage(
+            "ARC Session canceled successfully!"
+          );
+          setupStatusBar(context, statusBarItems); // Reinitialize the buttons
+        } else {
+          vscode.window.showErrorMessage("Failed to cancel session.");
+        }
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          "Error canceling session: " + error.message
+        );
+      }
+    }
+  );
+
+  context.subscriptions.push(cancelSessionCommand);
+
   // Check setup on startup
-  const setupCheck = vscode.workspace.onDidOpenTextDocument(async () => {
+  const setupCheck = vscode.window.onDidChangeActiveTextEditor(() => {
     const apiKey = context.globalState.get("arcadeApiKey");
     const slackMemberId = context.globalState.get("slackMemberId");
 
     if (!apiKey || !slackMemberId) {
       vscode.window.showWarningMessage(
-        'Arcade is not set up. Please run the "Arcade: Setup" command to configure the extension.'
+        'ARC is not set up. Please run the "ARC: Initialize Session" command to configure the extension.'
       );
     } else {
-      checkForOngoingSession(context, apiKey, slackMemberId);
+      setupStatusBar(context, statusBarItems);
     }
   });
 
   context.subscriptions.push(setupCheck);
 }
 
-async function checkForOngoingSession(context, apiKey, slackMemberId) {
-  try {
-    let response = await axios.get(
-      `https://hackhour.hackclub.com/api/session/${slackMemberId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
-      }
-    );
+function setupStatusBar(context, statusBarItems) {
+  // Clear existing status bar items
+  clearStatusBar(statusBarItems);
 
-    if (response.data.ok) {
-      let session = response.data.data;
-
-      if (!session.completed) {
-        setupStatusBar(context, session.id);
-      } else {
-        vscode.window.showInformationMessage(
-          "Wohoo! You completed the session!"
-        );
-        clearStatusBar();
-      }
-    } else {
-      vscode.window.showInformationMessage("No ongoing session found.");
-      clearStatusBar();
-    }
-  } catch (error) {
-    vscode.window.showErrorMessage(
-      "Error checking for ongoing sessions: " + error.message
-    );
-  }
-}
-
-function setupStatusBar(context, sessionId) {
-  const startIconPath = path.join(__dirname, "images", "start.png");
-  const cancelIconPath = path.join(__dirname, "images", "cancel.png");
-
+  // Create Start Button
   const startButton = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
   );
-  startButton.text = `Start Session`;
-  startButton.iconPath = startIconPath;
+  startButton.text = `Start ARC Session`;
   startButton.command = "arcade.start";
+  startButton.color = "white";
+  startButton.backgroundColor = "green";
   startButton.show();
+  statusBarItems.set("start", startButton);
 
+  // Create Cancel Button
   const cancelButton = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     101
   );
-  cancelButton.text = `Cancel Session`;
-  cancelButton.iconPath = cancelIconPath;
+  cancelButton.text = `Cancel ARC Session`;
   cancelButton.command = "arcade.cancel";
+  cancelButton.color = "white";
+  cancelButton.backgroundColor = "green";
   cancelButton.show();
+  statusBarItems.set("cancel", cancelButton);
 
-  vscode.commands.registerCommand("arcade.start", async () => {
-    vscode.window.showInformationMessage("Starting session...");
-    // Implement start session logic here
-  });
-
-  vscode.commands.registerCommand("arcade.cancel", async () => {
-    vscode.window.showInformationMessage("Cancelling session...");
-    // Implement cancel session logic here
-  });
-
-  context.subscriptions.push(startButton, cancelButton);
+  context.subscriptions.push(startButton);
+  context.subscriptions.push(cancelButton);
 }
 
-function clearStatusBar() {
-  vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: "Clearing status bar...",
-      cancellable: false,
-    },
-    async () => {
-      vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right).hide();
-    }
-  );
+function clearStatusBar(statusBarItems) {
+  statusBarItems.forEach((item) => item.dispose());
+  statusBarItems.clear();
 }
 
 function deactivate() {}
