@@ -4,6 +4,7 @@
   "description": "Control Arcade sessions from VS Code.",
   "version": "0.1.0",
   "publisher": "NirmitAggarwal",
+  "icon": "images/ticket.png",
   "engines": {
     "vscode": "^1.50.0"
   },
