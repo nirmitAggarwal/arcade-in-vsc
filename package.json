@@ -2,7 +2,7 @@
   "name": "arcade-in-code",
   "displayName": "Arcade in Code",
   "description": "Control Arcade sessions from VS Code.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "NirmitAggarwal",
   "icon": "images/ticket.png",
   "engines": {
